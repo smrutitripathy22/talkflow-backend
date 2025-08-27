@@ -207,7 +207,7 @@ public class AuthService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .chatsExist(chatMessageRepo.existsChatWithActiveRecipient(user.getUserId()))
-                .profileUrl("")
+                .profileUrl(user.getProfile_url())
                 .canChangePassword(user.getAuthProvider().equals(AuthProvider.LOCAL))
                 .build();
 

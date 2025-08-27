@@ -27,11 +27,11 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) {
 
-        logger.info("Incoming WebSocket handshake: {}", request.getURI());
+
 
         String uri = request.getURI().toString();
         String token = extractTokenFromUri(uri);
-        logger.info("Extracted token: {}", token);
+
 
         if (token != null) {
             String userEmail = null;

@@ -114,7 +114,7 @@ public class GroupChatService {
         List<User> users = groupMemberRepo.getAllUsersInGroup(groupId);
         List<UserData> userDataList = new ArrayList<>();
         for (User u : users) {
-            userDataList.add(UserData.builder().userId(u.getUserId()).email(u.getEmail()).firstName(u.getFirstName()).middleName(u.getMiddleName()).lastName(u.getLastName()).profileUrl("").build());
+            userDataList.add(UserData.builder().userId(u.getUserId()).email(u.getEmail()).firstName(u.getFirstName()).middleName(u.getMiddleName()).lastName(u.getLastName()).profileUrl(u.getProfile_url()).build());
         }
         return userDataList;
 
@@ -150,7 +150,7 @@ public class GroupChatService {
 
         List<UserData> userDataList = new ArrayList<>();
         for (User u : connectedUsersNotInGroup) {
-            userDataList.add(UserData.builder().userId(u.getUserId()).email(u.getEmail()).firstName(u.getFirstName()).middleName(u.getMiddleName()).lastName(u.getLastName()).profileUrl("").build());
+            userDataList.add(UserData.builder().userId(u.getUserId()).email(u.getEmail()).firstName(u.getFirstName()).middleName(u.getMiddleName()).lastName(u.getLastName()).profileUrl(u.getProfile_url()).build());
         }
 
         return userDataList;
@@ -171,7 +171,7 @@ public class GroupChatService {
         for (ChatMessage cm : chatMessages) {
             User sender = cm.getSender();
 
-            groupChats.add(GroupChats.builder().groupId(cm.getGroup().getId()).chatId(cm.getChatId()).timestamp(cm.getTimestamp()).content(cm.getContent()).from(sender.getEmail()).user(UserData.builder().firstName(sender.getFirstName()).middleName(sender.getMiddleName()).lastName(sender.getLastName()).email(sender.getEmail()).profileUrl("").build()).build());
+            groupChats.add(GroupChats.builder().groupId(cm.getGroup().getId()).chatId(cm.getChatId()).timestamp(cm.getTimestamp()).content(cm.getContent()).from(sender.getEmail()).user(UserData.builder().firstName(sender.getFirstName()).middleName(sender.getMiddleName()).lastName(sender.getLastName()).email(sender.getEmail()).profileUrl(sender.getProfile_url()).build()).build());
 
         }
         return groupChats;

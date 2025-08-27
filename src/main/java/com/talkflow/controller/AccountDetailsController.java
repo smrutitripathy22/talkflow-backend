@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,10 +36,15 @@ public class AccountDetailsController {
         accountDetailsService.passwordUpdate(changeRequest, user);
         return ResponseEntity.ok(ResponseBuilder.success("Password updated successfully...!!"));
     }
-
-    @PostMapping("/update-profile")
-    public ResponseEntity<ResponseDTO<Object>> updateProfile(@RequestBody ProfileUpdateDTO profileUpdateDTO, @AuthenticationPrincipal User user) {
-        accountDetailsService.profileUpdate(profileUpdateDTO, user);
+    @PostMapping(value = "/update-profile", consumes = {"multipart/form-data"})
+    public ResponseEntity<ResponseDTO<Object>> updateProfile(
+            @RequestPart("firstName") String firstName,
+            @RequestPart(value = "middleName", required = false) String middleName,
+            @RequestPart("lastName") String lastName,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
+            @AuthenticationPrincipal User user
+    ) {
+        accountDetailsService.profileUpdate(firstName, middleName, lastName, profileImage, user);
         return ResponseEntity.ok(ResponseBuilder.success("Profile updated successfully...!!"));
     }
 }

@@ -10,10 +10,12 @@ import com.talkflow.entity.auth.User;
 import com.talkflow.repository.ChatMessageRepo;
 import com.talkflow.repository.auth.UserRepository;
 
+import com.talkflow.service.S3Service;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -29,7 +31,10 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     private final JWTService jwtService;
     private final UserRepository userRepository;
     private final ChatMessageRepo chatMessageRepo;
-    private final ObjectMapper objectMapper; // to write JSON
+    private final ObjectMapper objectMapper;
+    private final S3Service s3Service;
+    @Value("${app.oauth2.redirect-url}")
+    private String oauthRedirectUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -47,6 +52,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
+                    String profile = s3Service.uploadGoogleProfile(picture, email);
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setFirstName(firstName);
@@ -54,20 +60,20 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                     newUser.setMiddleName(middleName);
                     newUser.setIsActive(true);
                     newUser.setIsVerified(true);
+                    newUser.setProfile_url(profile);
                     newUser.setAuthProvider(AuthProvider.GOOGLE);
                     return userRepository.save(newUser);
                 });
 
-        // Ensure user is active
         if (!Boolean.TRUE.equals(user.getIsActive())) {
             user.setIsActive(true);
             userRepository.save(user);
         }
 
-        // Generate JWT
+
         String jwtToken = jwtService.generateToken(user);
 
-        // Build UserData (same as in authenticate())
+
         UserData userData = UserData.builder()
                 .userId(user.getUserId())
                 .firstName(user.getFirstName())
@@ -75,18 +81,18 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .chatsExist(chatMessageRepo.existsChatWithActiveRecipient(user.getUserId()))
-                .profileUrl("")
+                .profileUrl(user.getProfile_url())
                 .build();
 
-        // Build AuthenticationResponse (same as in authenticate())
+
         AuthenticationResponse authResponse = AuthenticationResponse.builder()
                 .userData(userData)
                 .token(jwtToken)
                 .build();
 
-        // Write JSON to response
+
         String userJson = URLEncoder.encode(objectMapper.writeValueAsString(userData), "UTF-8");
-        String redirectUrl = "http://localhost:3000/login?google=success&token=" + jwtToken + "&user=" + userJson;
+        String redirectUrl = oauthRedirectUrl + "?google=success&token=" + jwtToken + "&user=" + userJson;
         response.sendRedirect(redirectUrl);
 
     }

@@ -11,8 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.Collections;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -20,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDTO<Object>> handleGeneralException(Exception ex) {
-        log.error("Exception Occurred: {}", ex.getMessage());
+        log.error("Exception Occurred: {}", ex.getMessage(), ex);
         return new ResponseEntity<>(ResponseBuilder.error(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -30,7 +29,10 @@ public class GlobalExceptionHandler {
 
         StringBuilder errorMessage = new StringBuilder("Validation failed: ");
         ex.getBindingResult().getAllErrors().forEach(error -> {
-            errorMessage.append(((FieldError) error).getField()).append(" - ").append(error.getDefaultMessage()).append("; ");
+            errorMessage.append(((FieldError) error).getField())
+                    .append(" - ")
+                    .append(error.getDefaultMessage())
+                    .append("; ");
         });
 
         return new ResponseEntity<>(ResponseBuilder.error(errorMessage.toString().trim()), HttpStatus.BAD_REQUEST);
@@ -46,5 +48,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResponseDTO<Object>> handleAuthenticationException(AuthenticationException ex) {
         log.error("Authentication failed: {}", ex.getMessage());
         return new ResponseEntity<>(ResponseBuilder.error("Invalid username or password"), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ResponseDTO<Object>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        log.error("File upload size exceeded: {}", ex.getMessage());
+        return new ResponseEntity<>(ResponseBuilder.error("File too large! Maximum upload size exceeded."),
+                HttpStatus.BAD_REQUEST);
     }
 }

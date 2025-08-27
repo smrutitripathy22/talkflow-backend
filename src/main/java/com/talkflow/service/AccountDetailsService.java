@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -22,10 +23,11 @@ public class AccountDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private  final S3Service s3Service;
 
     public UserData accountDetails(Long currentUserId) {
         User user = userRepository.findById(currentUserId).orElseThrow(() -> new EntityNotFoundException("User does not exist"));
-        return UserData.builder().userId(user.getUserId()).firstName(user.getFirstName()).middleName(user.getMiddleName()).lastName(user.getLastName()).email(user.getEmail()).profileUrl("").canChangePassword(user.getAuthProvider() == AuthProvider.LOCAL).build();
+        return UserData.builder().userId(user.getUserId()).firstName(user.getFirstName()).middleName(user.getMiddleName()).lastName(user.getLastName()).email(user.getEmail()).profileUrl(user.getProfile_url()).canChangePassword(user.getAuthProvider() == AuthProvider.LOCAL).build();
 
 
     }
@@ -61,10 +63,33 @@ public class AccountDetailsService {
     }
 
     @Transactional
-    public void profileUpdate(ProfileUpdateDTO profileUpdateDTO, User user) {
-        user.setFirstName(profileUpdateDTO.getFirstName());
-        user.setMiddleName(profileUpdateDTO.getMiddleName());
-        user.setLastName(profileUpdateDTO.getLastName());
+    public void profileUpdate(String firstName, String middleName, String lastName,
+                              MultipartFile profileImage, User user) {
+        user.setFirstName(firstName);
+        user.setMiddleName(middleName);
+        user.setLastName(lastName);
+
+        // Handle profile image upload
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+
+                String fileUrl = s3Service.uploadProfileWithUuid(
+                        profileImage.getInputStream(),
+                        profileImage.getSize(),
+                        user.getEmail(),
+                        profileImage.getContentType(),
+                        user.getProfile_url()
+                );
+
+
+                user.setProfile_url(fileUrl);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to upload profile image", e);
+            }
+        }
+
         userRepository.save(user);
     }
+
 }

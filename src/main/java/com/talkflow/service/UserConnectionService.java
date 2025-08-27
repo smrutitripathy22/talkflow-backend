@@ -326,7 +326,7 @@ public class UserConnectionService {
 
         return allUsers.stream().filter(user -> !user.getUserId().equals(currentUserId))
                 .filter(user -> !connectedUserIds.contains(user.getUserId()))
-                .map(user -> UserData.builder().userId(user.getUserId()).firstName(user.getFirstName()).middleName(user.getMiddleName()).lastName(user.getLastName()).email(user.getEmail()).profileUrl("").build()).collect(Collectors.toList());
+                .map(user -> UserData.builder().userId(user.getUserId()).firstName(user.getFirstName()).middleName(user.getMiddleName()).lastName(user.getLastName()).email(user.getEmail()).profileUrl(user.getProfile_url()).build()).collect(Collectors.toList());
     }
 
 
